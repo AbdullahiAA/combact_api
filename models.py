@@ -50,6 +50,8 @@ class Student(db.Model):
     school_name = db.Column(db.String())
     level = db.Column(db.String(120))
     rank = db.Column(db.String(120), default="0")
+    # completed_lessons = db.Column(db.String(120))
+    # attempted_quizzes = db.Column(db.String(120))
     completed_lessons = db.Column(
         db.ARRAY(db.String()), default=db.ARRAY(db.String))
     attempted_quizzes = db.Column(
@@ -64,8 +66,8 @@ class Student(db.Model):
         self.school_name = school_name
         self.level = level
         self.rank = rank
-        self.completed_lessons = completed_lessons
-        self.attempted_quizzes = attempted_quizzes
+        self.completed_lessons = json.loads(completed_lessons)
+        self.attempted_quizzes = json.loads(attempted_quizzes)
 
     def insert(self):
         db.session.add(self)
@@ -78,6 +80,10 @@ class Student(db.Model):
     def update(self):
         db.session.commit()
 
+    def get_firstname(self):
+        # This will return the firstname in a capitalized form
+        return self.name.split(' ').pop(0).capitalize()
+
     def format(self):
         return {
             "id": self.id,
@@ -88,8 +94,8 @@ class Student(db.Model):
             "school_name": self.school_name,
             "level": self.level,
             "rank": self.rank,
-            "completed_lessons": self.completed_lessons,
-            "attempted_quizzes": self.attempted_quizzes,
+            "completed_lessons": json.loads(self.completed_lessons),
+            "attempted_quizzes": json.loads(self.attempted_quizzes),
         }
 
     def short(self):
