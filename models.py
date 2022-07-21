@@ -1,6 +1,8 @@
+from array import array
 import os
-from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
 from flask_migrate import Migrate
 import json
 from dotenv import load_dotenv
@@ -32,6 +34,15 @@ def setup_db(app, database_path=database_path):
     migrate = Migrate(app, db)
 
 
+def convert_to_list(string):
+    if ',' in string:
+        arr = string.split(',')
+    else:
+        arr = list(string)
+
+    return arr
+
+
 """
 Students
 
@@ -42,20 +53,16 @@ class Student(db.Model):
     __tablename__ = 'students'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String())
-    username = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String())
-    email = db.Column(db.String(120), unique=True)
-    gender = db.Column(db.String(120))
-    school_name = db.Column(db.String())
-    level = db.Column(db.String(120))
-    rank = db.Column(db.String(120), default="0")
-    # completed_lessons = db.Column(db.String(120))
-    # attempted_quizzes = db.Column(db.String(120))
-    completed_lessons = db.Column(
-        db.ARRAY(db.String()), default=db.ARRAY(db.String))
-    attempted_quizzes = db.Column(
-        db.ARRAY(db.String()), default=db.ARRAY(db.String))
+    name = db.Column(db.String(), nullable=False)
+    username = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    gender = db.Column(db.String(120), nullable=False)
+    school_name = db.Column(db.String(), nullable=False)
+    level = db.Column(db.String(120), nullable=False)
+    rank = db.Column(db.String(120), default="0", nullable=False)
+    completed_lessons = db.Column(db.String(), default="", nullable=False)
+    attempted_quizzes = db.Column(db.String(), default="", nullable=False)
 
     def __init__(self, name, username, password, email, gender, school_name, level, rank, completed_lessons, attempted_quizzes):
         self.name = name
@@ -66,8 +73,8 @@ class Student(db.Model):
         self.school_name = school_name
         self.level = level
         self.rank = rank
-        self.completed_lessons = json.loads(completed_lessons)
-        self.attempted_quizzes = json.loads(attempted_quizzes)
+        self.completed_lessons = completed_lessons
+        self.attempted_quizzes = attempted_quizzes
 
     def insert(self):
         db.session.add(self)
@@ -94,8 +101,8 @@ class Student(db.Model):
             "school_name": self.school_name,
             "level": self.level,
             "rank": self.rank,
-            "completed_lessons": json.loads(self.completed_lessons),
-            "attempted_quizzes": json.loads(self.attempted_quizzes),
+            "completed_lessons": convert_to_list(self.completed_lessons),
+            "attempted_quizzes": convert_to_list(self.attempted_quizzes,)
         }
 
     def short(self):

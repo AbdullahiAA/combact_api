@@ -89,8 +89,8 @@ def create_app(test_config=None):
             school_name=school_name,
             level=level,
             rank=0,
-            completed_lessons=[],
-            attempted_quizzes=[],
+            completed_lessons="",
+            attempted_quizzes="",
         )
 
         new_student.insert()
@@ -169,32 +169,47 @@ def create_app(test_config=None):
         student = Student.query.get(user_id)
         formatted_data = student.format()
 
-        # return jsonify(formatted_data)
+        if str(lesson_id) not in formatted_data['completed_lessons']:
+            formatted_data['completed_lessons'].append(lesson_id)
 
-        completed_lessons = formatted_data['completed_lessons']
-        print(completed_lessons)
+            # Convert back to string for saving purpose
+            completed_lessons_str = ','.join(
+                str(x) for x in formatted_data['completed_lessons'])
 
-        print("TYPE")
-
-        if lesson_id not in completed_lessons:
-            completed_lessons.append(lesson_id)
-
-            student['completed_lessons'] = json.dumps(completed_lessons)
-            # student['completed_lessons'].append(lesson_id)
-            print(type(formatted_data))
-            print(formatted_data)
-
+            # Update the changes
+            student.completed_lessons = completed_lessons_str
             student.update()
 
-            return jsonify({
-                'status': True,
-                'message': 'Lesson marked completed',
-                'student': student
-            }), 200
-        else:
-            return Error({
-                'message': 'Can not perform the action at the moment'
-            }, 400)
+        return jsonify({
+            'status': True,
+            'message': 'Lesson marked as completed',
+            'student': student.format()
+        }), 200
+
+    @app.route('/quizzes/<int:lesson_id>/mark')
+    @requires_auth
+    def mark_quiz_as_attempted(payload, lesson_id):
+        user_id = payload
+
+        student = Student.query.get(user_id)
+        formatted_data = student.format()
+
+        if str(lesson_id) not in formatted_data['attempted_quizzes']:
+            formatted_data['attempted_quizzes'].append(lesson_id)
+
+            # Convert back to string for saving purpose
+            attempted_quizzes_str = ','.join(
+                str(x) for x in formatted_data['attempted_quizzes'])
+
+            # Update the changes
+            student.attempted_quizzes = attempted_quizzes_str
+            student.update()
+
+        return jsonify({
+            'status': True,
+            'message': 'Quiz marked as completed',
+            'student': student.format()
+        }), 200
 
     # Errors
 
